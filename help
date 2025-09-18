@@ -1,0 +1,162 @@
+-- =====================================================
+--   HASKELL CHEAT SHEET – QUICK REFERENCE FOR LABS
+-- =====================================================
+
+-- =============================
+-- 1. Basics
+-- =============================
+-- Comments
+-- single line:  --
+-- multi line:   {-  -}
+
+x = 5
+name = "Alice"
+piVal = 3.14
+flag = True
+
+-- Functions
+square n = n * n
+add x y = x + y
+
+-- =============================
+-- 2. Types
+-- =============================
+-- Int, Integer, Float, Double, Bool, Char, String
+
+nums :: [Int]
+nums = [1,2,3,4]
+
+pair :: (Int, String)
+pair = (1, "Hello")
+
+addTyped :: Int -> Int -> Int
+addTyped x y = x + y
+
+-- =============================
+-- 3. Control Structures
+-- =============================
+absVal x = if x >= 0 then x else -x
+
+grade m
+    | m < 40    = "Fail"
+    | m < 60    = "Pass"
+    | m < 80    = "Merit"
+    | otherwise = "Distinction"
+
+describe n = case n of
+    0 -> "Zero"
+    1 -> "One"
+    _ -> "Other"
+
+-- =============================
+-- 4. Lists
+-- =============================
+list = [1,2,3]
+consList = 1 : [2,3]
+
+numsRange = [1..10]
+evens = [2,4..20]
+
+headEx = head [1,2,3]   -- 1
+tailEx = tail [1,2,3]   -- [2,3]
+lenEx  = length [1,2,3] -- 3
+sumEx  = sum [1,2,3]    -- 6
+revEx  = reverse [1,2]  -- [2,1]
+
+squares = [x*x | x <- [1..5], even x]
+
+-- =============================
+-- 5. Recursion
+-- =============================
+fact 0 = 1
+fact n = n * fact (n-1)
+
+len [] = 0
+len (_:xs) = 1 + len xs
+
+-- =============================
+-- 6. Pattern Matching
+-- =============================
+fst' (x,_) = x
+snd' (_,y) = y
+
+sumList [] = 0
+sumList (x:xs) = x + sumList xs
+
+-- =============================
+-- 7. Higher-Order Functions
+-- =============================
+mapEx    = map (*2) [1,2,3]         -- [2,4,6]
+filterEx = filter even [1..10]      -- [2,4,6,8,10]
+foldrEx  = foldr (+) 0 [1,2,3]      -- 6
+foldlEx  = foldl (*) 1 [1,2,3]      -- 6
+
+-- =============================
+-- 8. Input/Output
+-- =============================
+-- mainIO demonstrates reading input
+mainIO :: IO ()
+mainIO = do
+    putStrLn "Enter your name:"
+    name <- getLine
+    putStrLn ("Hello, " ++ name)
+
+-- Reading multiple lines
+-- input <- getContents
+-- let ls = lines input
+
+-- =============================
+-- 9. Modules
+-- =============================
+-- import Data.Char
+-- toUpperCase = map toUpper "hello"
+
+-- =============================
+-- 10. Error Handling
+-- =============================
+safeRead :: Read a => String -> Maybe a
+safeRead s = case reads s of
+    [(val,"")] -> Just val
+    _          -> Nothing
+
+-- =============================
+-- 11. Useful Snippets for Labs
+-- =============================
+-- Parse "Name:Value"
+parse s = let [n,v] = wordsWhen (==':') s in (n, read v)
+
+-- Split utility
+wordsWhen :: (Char -> Bool) -> String -> [String]
+wordsWhen p s = case dropWhile p s of
+    "" -> []
+    s' -> w : wordsWhen p s''
+        where (w, s'') = break p s'
+
+-- Count evens with recursion
+countEven [] = 0
+countEven (x:xs)
+    | even x    = 1 + countEven xs
+    | otherwise = countEven xs
+
+-- =============================
+-- 12. Quick Reference Table
+-- =============================
+
+{-
+| Concept       | Example                               |
+|---------------|---------------------------------------|
+| Function      | f x y = x + y                        |
+| If/Else       | if n > 0 then "Pos" else "Neg"       |
+| Guards        | | n < 0 = "Neg"                      |
+| Case          | case n of 0 -> "Zero"                |
+| List Comp     | [x*2 | x <- [1..5], odd x]           |
+| Recursion     | f [] = 0; f (x:xs) = x + f xs        |
+| Map           | map (*2) [1,2,3]                     |
+| Filter        | filter (>3) [1..5]                   |
+| Fold          | foldr (+) 0 [1..5]                   |
+| IO            | name <- getLine                      |
+-}
+
+-- =====================================================
+-- End of Haskell Cheat Sheet
+-- =====================================================
