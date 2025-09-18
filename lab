@@ -1,0 +1,274 @@
+-- Q1: Hospital Patient Records Analysis
+
+import System.IO
+
+type Patient = (String, Int, Int)
+
+-- Requirement: Use recursion for counting
+-- Recursively count patients by reason codes
+countReasons :: [Patient] -> (Int, Int, Int)
+countReasons [] = (0,0,0)
+-- Requirement: Use pattern matching to extract tuple elements
+countReasons ((_, _, reason):xs) =
+    let (c1, c2, c3) = countReasons xs
+    in case reason of
+        1 -> (c1+1, c2, c3)
+        2 -> (c1, c2+1, c3)
+        3 -> (c1, c2, c3+1)
+        _ -> (c1, c2, c3)
+
+-- Requirement: Use recursion for filtering adults
+countAdults :: [Patient] -> Int
+countAdults [] = 0
+countAdults ((_, age, _):xs)
+    | age >= 18 = 1 + countAdults xs
+    | otherwise = countAdults xs
+
+-- Calculate average age
+avgAge :: [Patient] -> Float
+avgAge [] = 0
+avgAge pts = fromIntegral (sumAges pts) / fromIntegral (length pts)
+  where
+    sumAges [] = 0
+    sumAges ((_,a,_):xs) = a + sumAges xs
+
+-- Requirement: Parse input into tuples
+parsePatient :: String -> Patient
+parsePatient str =
+    let parts = wordsWhen (==':') str
+    in case parts of
+        [n,a,r] -> (n, read a, read r)
+        _       -> ("Invalid",0,0)  -- fallback
+
+-- Requirement: Purely functional utility (no mutable vars)
+wordsWhen :: (Char -> Bool) -> String -> [String]
+wordsWhen p s = case dropWhile p s of
+    "" -> []
+    s' -> w : wordsWhen p s''
+        where (w, s'') = break p s'
+
+printReport :: [Patient] -> IO ()
+printReport pts = do
+    let (c1,c2,c3) = countReasons pts
+    let adults     = countAdults pts
+    let total      = length pts
+    putStrLn "---- Hospital Report ----"
+    putStrLn $ "General Checkup: " ++ show c1
+    putStrLn $ "Emergency: " ++ show c2
+    putStrLn $ "Surgery: " ++ show c3
+    putStrLn $ "Total Adults: " ++ show adults
+    putStrLn $ "Total Patients: " ++ show total
+    putStrLn $ "Average Age: " ++ show (avgAge pts)
+
+main :: IO ()
+main = do
+    putStrLn "Enter patient records (Name:Age:Reason). Blank line to stop:"
+    input <- getContents
+    let userData = filter (/= "") (lines input)
+
+    -- Requirement: Works with both user input and hardcoded data
+    let patients = if null userData
+                      then [("Alice",25,1),("Bob",17,2),("Charlie",40,3),("Diana",30,1)]
+                      else map parsePatient userData
+    printReport patients
+
+{- 
+Sample Input:
+Alice:25:1
+Bob:17:2
+Charlie:40:3
+Diana:30:1
+-}
+
+
+-- Q2: Cinema Ticket Sales Report (Enhanced with Per-Category Revenue + Totals)
+
+import System.IO
+
+type Sale = (String, Int)
+
+-- Requirement: Use recursion for summing
+countCategory :: String -> [Sale] -> Int
+countCategory _ [] = 0
+-- Requirement: Use pattern matching
+countCategory cat ((c,q):xs)
+    | c == cat  = q + countCategory cat xs
+    | otherwise = countCategory cat xs
+
+-- Ticket prices
+ticketPrice :: String -> Int
+ticketPrice "Adult"  = 12
+ticketPrice "Child"  = 8
+ticketPrice "Senior" = 10
+ticketPrice _        = 0  -- fallback
+
+-- Requirement: Use recursion for revenue
+calcRevenue :: [Sale] -> Int
+calcRevenue [] = 0
+calcRevenue ((c,q):xs) = ticketPrice c * q + calcRevenue xs
+
+-- Requirement: Parse input into tuples
+parseSale :: String -> Sale
+parseSale str =
+    let parts = wordsWhen (==':') str
+    in case parts of
+        [c,q] -> (c, read q)
+        _     -> ("Invalid",0) -- fallback
+
+-- Requirement: Purely functional utility (no mutable vars)
+wordsWhen :: (Char -> Bool) -> String -> [String]
+wordsWhen p s = case dropWhile p s of
+    "" -> []
+    s' -> w : wordsWhen p s''
+        where (w, s'') = break p s'
+
+printReport :: [Sale] -> IO ()
+printReport sales = do
+    let adultQty  = countCategory "Adult" sales
+    let childQty  = countCategory "Child" sales
+    let seniorQty = countCategory "Senior" sales
+    let totalQty  = adultQty + childQty + seniorQty
+
+    let adultRevenue  = adultQty  * ticketPrice "Adult"
+    let childRevenue  = childQty  * ticketPrice "Child"
+    let seniorRevenue = seniorQty * ticketPrice "Senior"
+    let totalRevenue  = calcRevenue sales
+
+    putStrLn "---- Cinema Sales Report ----"
+    putStrLn $ "Adult Tickets: " ++ show adultQty
+    putStrLn $ "Child Tickets: " ++ show childQty
+    putStrLn $ "Senior Tickets: " ++ show seniorQty
+    putStrLn $ "Total Tickets: " ++ show totalQty
+    putStrLn $ "Total Revenue: $" ++ show totalRevenue
+    putStrLn "---- Revenue Breakdown ----"
+    putStrLn $ "Adult Revenue:  $" ++ show adultRevenue
+    putStrLn $ "Child Revenue:  $" ++ show childRevenue
+    putStrLn $ "Senior Revenue: $" ++ show seniorRevenue
+
+main :: IO ()
+main = do
+    putStrLn "Enter sales records (Category:Quantity). Blank line to stop:"
+    input <- getContents
+    let userData = filter (/= "") (lines input)
+
+    let sales = if null userData
+                   then [("Adult",5),("Child",3),("Senior",2)]
+                   else map parseSale userData
+    printReport sales
+
+{- 
+Sample Input:
+Adult:5
+Child:3
+Senior:2
+
+Sample Output:
+---- Cinema Sales Report ----
+Adult Tickets: 5
+Child Tickets: 3
+Senior Tickets: 2
+Total Tickets: 10
+Total Revenue: $94
+---- Revenue Breakdown ----
+Adult Revenue:  $60
+Child Revenue:  $24
+Senior Revenue: $20
+-}
+
+
+-- Q3: Student Exam Results Report (Enhanced with Averages + Category Counts)
+
+import System.IO
+
+type Student = (String, Int)
+
+-- Requirement: Classification with guards
+classify :: Int -> String
+classify m
+    | m < 40    = "Fail"
+    | m < 60    = "Pass"
+    | m < 80    = "Merit"
+    | otherwise = "Distinction"
+
+-- Requirement: Recursively categorize
+categorize :: [Student] -> [(String, Int, String)]
+categorize [] = []
+-- Requirement: Use pattern matching
+categorize ((n,m):xs) = (n, m, classify m) : categorize xs
+
+-- Requirement: Use recursion for counting
+countCategory :: (Int -> Bool) -> [Student] -> Int
+countCategory _ [] = 0
+countCategory cond ((_,m):xs)
+    | cond m    = 1 + countCategory cond xs
+    | otherwise = countCategory cond xs
+
+-- Requirement: Use recursion for calculating average
+calcAverage :: [Student] -> Float
+calcAverage [] = 0
+calcAverage xs = fromIntegral (sumMarks xs) / fromIntegral (length xs)
+  where
+    sumMarks [] = 0
+    sumMarks ((_,m):rest) = m + sumMarks rest
+
+-- Requirement: Parse input into tuples
+parseStudent :: String -> Student
+parseStudent str =
+    let parts = wordsWhen (==':') str
+    in case parts of
+        [n,m] -> (n, read m)
+        _     -> ("Invalid",0)
+
+-- Requirement: Purely functional utility
+wordsWhen :: (Char -> Bool) -> String -> [String]
+wordsWhen p s = case dropWhile p s of
+    "" -> []
+    s' -> w : wordsWhen p s''
+        where (w, s'') = break p s'
+
+-- Pretty output
+printReport :: [Student] -> IO ()
+printReport students = do
+    let categorized = categorize students
+    mapM_ print categorized
+    
+    let total    = length students
+    let passCnt  = countCategory (>= 40) students
+    let failCnt  = countCategory (< 40) students
+    let distCnt  = countCategory (>= 75) students
+    let avg      = calcAverage students
+
+    putStrLn "---- Student Exam Report ----"
+    putStrLn $ "Total Students: " ++ show total
+    putStrLn $ "Pass: " ++ show passCnt
+    putStrLn $ "Fail: " ++ show failCnt
+    putStrLn $ "Distinction: " ++ show distCnt
+    putStrLn $ "Class Average Marks: " ++ show avg
+
+main :: IO ()
+main = do
+    putStrLn "Enter student records (Name:Marks). Blank line to stop:"
+    input <- getContents
+    let userData = filter (/= "") (lines input)
+
+    -- ✅ Works with both user input and hardcoded data
+    let students = if null userData
+                      then [("Alice",85),("Bob",30),("Charlie",60),("Diana",75)]
+                      else map parseStudent userData
+    printReport students
+
+{- 
+Sample Input:
+Alice:85
+Bob:30
+Charlie:60
+Diana:75
+
+Sample Output:
+---- Student Exam Report ----
+Total Students: 4
+Pass: 3
+Fail: 1
+Distinction: 2
+Class Average Marks: 62.5
+-}
